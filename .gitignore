@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+
+.venv/
+venv/
+env/
+
+models/*.joblib
+dataset/
+apa pula nii/
+qqqj
+credit_risk_dashboard.png
+prediction_report.png
+predictions.csv

@@ -1,0 +1,17 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+dataset/
+models/
+notebooks/
+apa pula nii/
+qqqj
+*.ipynb
+*.png
+predictions.csv
