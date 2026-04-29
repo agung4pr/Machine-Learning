@@ -28,8 +28,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: |
-            requirements.txt
-            requirements-dev.txt
+            predict_credit_risk/requirements.txt
+            predict_credit_risk/requirements-dev.txt
 
       - name: Install dependencies
         run: |
