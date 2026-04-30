@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "predict-credit-risk"
+version = "0.1.0"
+description = "Credit risk modeling project with training, inference, and FastAPI serving."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "fastapi",
+  "gunicorn",
+  "uvicorn[standard]",
+  "pandas",
+  "scikit-learn",
+  "joblib",
+  "pydantic",
+  "matplotlib",
+  "seaborn",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "ruff",
+]
+
+[tool.setuptools.packages.find]
+include = ["predict_credit_risk*"]
