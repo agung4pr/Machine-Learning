@@ -17,6 +17,9 @@ jobs:
       fail-fast: false
       matrix:
         python-version: ["3.10", "3.11"]
+    defaults:
+      run:
+        working-directory: predict_credit_risk
 
     steps:
       - name: Check out repository
@@ -34,13 +37,13 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r predict_credit_risk/requirements-dev.txt
+          pip install -r requirements-dev.txt
 
       - name: Lint
         run: ruff check .
 
       - name: Run tests
-        run: pytest -q
+        run: pytest -q tests
 
   validate-container:
     runs-on: ubuntu-latest
@@ -56,7 +59,7 @@ jobs:
       - name: Build production image
         uses: docker/build-push-action@v6
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./predict_credit_risk
+          file: ./predict_credit_risk/Dockerfile
           push: false
           tags: predict-credit-risk:ci

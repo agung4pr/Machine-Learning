@@ -58,7 +58,7 @@ jobs:
       - name: Build and publish image
         uses: docker/build-push-action@v6
         with:
-          context: .
+          context: ./predict_credit_risk
           file: ./predict_credit_risk/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
