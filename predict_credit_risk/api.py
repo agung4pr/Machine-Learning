@@ -5,7 +5,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field, model_validator
 
-from predict_credit_risk.training import (
+from training import (
     FEATURE_COLUMNS,
     MODEL_OUTPUT_PATH,
     load_model_artifact,

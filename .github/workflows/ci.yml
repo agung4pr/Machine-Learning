@@ -19,7 +19,7 @@ jobs:
         python-version: ["3.11", "3.12"]
     defaults:
       run:
-        working-directory: predict_credit_risk
+        working-directory: ./
 
     steps:
       - name: Check out repository
