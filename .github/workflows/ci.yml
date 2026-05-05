@@ -31,8 +31,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
           cache-dependency-path: |
-            predict_credit_risk/requirements.txt
-            predict_credit_risk/requirements-dev.txt
+            requirements.txt
+            requirements-dev.txt
 
       - name: Install dependencies
         run: |
@@ -61,6 +61,6 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: ./predict_credit_risk
-          file: ./predict_credit_risk/Dockerfile
+          file: ./Dockerfile
           push: false
           tags: predict-credit-risk:ci
