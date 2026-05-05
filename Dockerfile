@@ -12,7 +12,7 @@ RUN python -m pip install --upgrade pip \
     && pip install -r requirements.txt
 
 COPY predict_credit_risk ./predict_credit_risk
-COPY README.md ./app
+COPY README.md ./
 COPY models /app/models
 
 ENV CREDIT_RISK_MODEL_PATH=/app/models/credit_risk_pipeline.joblib
