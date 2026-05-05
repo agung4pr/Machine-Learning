@@ -11,7 +11,7 @@ COPY requirements.txt ./
 RUN python -m pip install --upgrade pip \
     && pip install -r requirements.txt
 
-COPY predict_credit_risk ./
+COPY predict_credit_risk ./predict_credit_risk
 COPY README.md ./
 
 RUN mkdir -p /app/models
