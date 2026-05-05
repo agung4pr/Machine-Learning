@@ -1,11 +1,14 @@
 from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
 import pandas as pd
 from fastapi import FastAPI, HTTPException
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field, model_validator
 
-from training import (
+from predict_credit_risk.training import (
     FEATURE_COLUMNS,
     MODEL_OUTPUT_PATH,
     load_model_artifact,
@@ -18,6 +21,10 @@ app = FastAPI(
     version="1.0.0",
     description="Predict loan default risk from applicant and loan features.",
 )
+
+STATIC_DIR = Path(__file__).parent / "static"
+if STATIC_DIR.exists():
+    app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 
 
 class LoanApplication(BaseModel):
@@ -52,14 +59,21 @@ class LoanApplication(BaseModel):
         return self
 
 
+class PredictionRequest(BaseModel):
+    record: LoanApplication
+    strategy: Literal["aggressive", "balanced", "conservative"] = "balanced"
+
+
 class BatchPredictionRequest(BaseModel):
     records: list[LoanApplication] = Field(..., min_length=1)
+    strategy: Literal["aggressive", "balanced", "conservative"] = "balanced"
 
 
 class PredictionResponse(BaseModel):
     predicted_loan_status: int
     predicted_risk_probability: float
     decision_threshold: float
+    strategy: str
     risk_label: str
 
 
@@ -82,10 +96,18 @@ def to_feature_frame(records: list[LoanApplication]) -> pd.DataFrame:
     return pd.DataFrame(data, columns=FEATURE_COLUMNS)
 
 
-def score_records(records: list[LoanApplication]) -> list[PredictionResponse]:
-    artifact = load_model()
+def score_records(records: list[LoanApplication], strategy: str = "balanced") -> list[PredictionResponse]:
+    artifact = load_model_artifact()
     model = artifact["model"]
-    threshold = float(artifact["decision_threshold"])
+    thresholds = artifact.get("thresholds", {})
+    
+    if strategy not in thresholds:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid strategy '{strategy}'. Must be one of: {list(thresholds.keys())}"
+        )
+    
+    threshold = thresholds[strategy]
     features = to_feature_frame(records)
     probabilities = model.predict_proba(features)[:, 1]
     predictions = predict_from_probabilities(probabilities, threshold)
@@ -97,6 +119,7 @@ def score_records(records: list[LoanApplication]) -> list[PredictionResponse]:
                 predicted_loan_status=int(predicted_status),
                 predicted_risk_probability=round(float(probability), 6),
                 decision_threshold=round(threshold, 6),
+                strategy=strategy,
                 risk_label="high_risk" if int(predicted_status) == 1 else "low_risk",
             )
         )
@@ -106,6 +129,9 @@ def score_records(records: list[LoanApplication]) -> list[PredictionResponse]:
 
 @app.get("/")
 def root():
+    ui_file = STATIC_DIR / "index.html"
+    if ui_file.exists():
+        return FileResponse(ui_file, media_type="text/html")
     return {
         "message": "Credit risk prediction API is running.",
         "docs_url": "/docs",
@@ -126,16 +152,18 @@ def health_check():
         "status": "ok",
         "model_path": str(MODEL_OUTPUT_PATH),
         "model_type": type(artifact["model"]).__name__,
+        "model_version": artifact.get("model_version", "unknown"),
         "decision_threshold": artifact["decision_threshold"],
         "threshold_strategy": artifact["threshold_strategy"],
+        "available_strategies": artifact.get("thresholds", {}).keys(),
     }
 
 
 @app.post("/predict", response_model=PredictionResponse)
-def predict(record: LoanApplication):
-    return score_records([record])[0]
+def predict(request: PredictionRequest):
+    return score_records([request.record], request.strategy)[0]
 
 
 @app.post("/predict-batch", response_model=BatchPredictionResponse)
 def predict_batch(request: BatchPredictionRequest):
-    return BatchPredictionResponse(predictions=score_records(request.records))
+    return BatchPredictionResponse(predictions=score_records(request.records, request.strategy))

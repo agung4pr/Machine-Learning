@@ -188,6 +188,12 @@ def save_model_artifact(
     output_path=MODEL_OUTPUT_PATH,
 ):
     output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Create multiple strategy thresholds around the tuned threshold
+    balanced_threshold = float(threshold)
+    aggressive_threshold = max(0.1, balanced_threshold - 0.2)  # Lower = more predictions
+    conservative_threshold = min(0.9, balanced_threshold + 0.2)  # Higher = fewer predictions
+    
     artifact = {
         "model": model,
         "decision_threshold": float(threshold),
@@ -198,6 +204,12 @@ def save_model_artifact(
         "threshold_validation_precision": float(tuning_summary["precision"]),
         "threshold_validation_recall": float(tuning_summary["recall"]),
         "threshold_validation_fbeta": float(tuning_summary["fbeta_score"]),
+        "thresholds": {
+            "aggressive": aggressive_threshold,
+            "balanced": balanced_threshold,
+            "conservative": conservative_threshold,
+        },
+        "model_version": "v1.0.0",
     }
     joblib.dump(artifact, output_path)
     return output_path
@@ -207,6 +219,7 @@ def load_model_artifact(model_path=MODEL_OUTPUT_PATH):
     artifact = joblib.load(model_path)
 
     if hasattr(artifact, "predict_proba"):
+        # Old format - create default thresholds
         return {
             "model": artifact,
             "decision_threshold": 0.5,
@@ -217,7 +230,25 @@ def load_model_artifact(model_path=MODEL_OUTPUT_PATH):
             "threshold_validation_precision": None,
             "threshold_validation_recall": None,
             "threshold_validation_fbeta": None,
+            "thresholds": {
+                "aggressive": 0.3,
+                "balanced": 0.5,
+                "conservative": 0.7,
+            },
+            "model_version": "v0.0.0",
         }
+
+    # New format - ensure thresholds exist
+    if "thresholds" not in artifact:
+        threshold = artifact.get("decision_threshold", 0.5)
+        artifact["thresholds"] = {
+            "aggressive": max(0.1, threshold - 0.2),
+            "balanced": threshold,
+            "conservative": min(0.9, threshold + 0.2),
+        }
+    
+    if "model_version" not in artifact:
+        artifact["model_version"] = "v0.0.0"
 
     return artifact
 
