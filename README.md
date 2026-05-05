@@ -11,7 +11,7 @@ A portfolio project for training and serving a machine learning model that predi
 - `tests/`: focused tests for the data-cleaning logic
 - `notebooks/`: experimentation notebook
 - `scripts/`: small utility scripts for quick dataset inspection
-
+  
 ## Project structure
 
 ```text
